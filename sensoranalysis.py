@@ -55,6 +55,19 @@ class SensorAnalysis(object):
     def drawHeartbeatOfZ5(self):
         plt.plot(range(0, len(self.z5)), self.z5, c='g')
         plt.show()
+        
+    def line3d(self):  #绘制第5个传感器的空间3维曲线图 x,y,z
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        #x, y = np.meshgrid(abs(self.x5[:100]), self.y5[:100])
+        #[_, z] = np.meshgrid(self.z5[:100])
+        #ax.plot_surface(z, x, y, rstride=1, cstride=1, cmap='rainbow')
+        plt.plot(self.x5, self.y5, self.z5)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.view_init(30, 45) # 30为俯视角度 45为水平观察角度
+        plt.show()
     
     #绘制速度V带箭头
     def drawV(self, dlta=0.1):
