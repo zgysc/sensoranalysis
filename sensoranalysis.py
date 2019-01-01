@@ -9,9 +9,9 @@ import numpy as np
 
 class SensorAnalysis(object):
 
-    def __init__(self, path, seperator=',', cols=[2, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 0]):
+    def __init__(self, path, seperator=',', cols=[2, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15,  17, 18, 21, 22]):
         self._path = path
-        self.y1, self.z1, self.y2, self.z2, self.y3, self.z3, self.y4, self.z4, self.x5, self.y5, self.z5,self.yz0 = loadtxt(path, delimiter=seperator, usecols=tuple(cols), unpack=True)
+        self.y1, self.z1, self.y2, self.z2, self.y3, self.z3, self.y4, self.z4, self.x5, self.y5, self.z5,self.vy,self.vz,self.ay,self.az = loadtxt(path, delimiter=seperator, usecols=tuple(cols), unpack=True)
         self._total_frames = len(self.y1)
         self._cs = ['b', 'r', 'c', 'm', 'g', 'y', 'k']
         #plt.grid(True, 'both', 'both', linestyle='-.')
@@ -24,6 +24,7 @@ class SensorAnalysis(object):
         # x 轴不可见
         #frame.axes.get_xaxis().set_visible(False)
 
+    #绘制制定传感器图像
     def sensor(self, which, ff, tf, step=1):
         if ff < 1:
             ff = 1
@@ -50,25 +51,39 @@ class SensorAnalysis(object):
                 plt.plot([self.y5[i]], [self.z5[i]], c='k')
         plt.show()
 
-    def drawSinOfZ5(self):
+    #绘制z5的心电图， x轴为帧数，y轴为z5的高度    
+    def drawHeartbeatOfZ5(self):
         plt.plot(range(0, len(self.z5)), self.z5, c='g')
         plt.show()
-
-    def drawAccelerate(self):
-        keyframes_up = list([i for i in range(1, len(self.z5) - 1) if self.z5[i - 1] > self.z5[i] and self.z5[i + 1] > self.z5[i]])
-        keyframes_down = list([i for i in range(1, len(self.z5) - 1) if self.z5[i - 1] < self.z5[i] and self.z5[i + 1] < self.z5[i]])
-        num = len(keyframes_down) if len(keyframes_down) < len(keyframes_up) else len(keyframes_up)
-        plt.plot(self.y5, self.z5, c='m', linewidth=1.0, linestyle='--')
-        for i in range(0, num):
-            upframe = keyframes_up[i]
-            downframe = keyframes_down[i]
-            plt.plot([self.y5[upframe], self.y5[downframe]], [self.z5[upframe], self.z5[downframe]], c='g')
-
+    
+    #绘制速度V带箭头
+    def drawV(self, dlta=0.1):
+        plt.plot(self.y5[::-1], self.z5[::-1], c='m', linewidth=1.0, linestyle='--')
+        #计算所有抬足点关键帧
+        keyframes_up = [i+2 for i in range(0, len(self.vy)-3) if self.vy[i] > 0 and self.vy[i + 1] <0 and self.vy[i + 2] <0]
+        print(keyframes_up) #打印出所有抬足点的关键帧
+        
+        #使用打印出来的关键帧进行画图
+        for i in [39,132,250,413,555,680,821,967,1118,1272,1414,1569,1729,1876]:
+        #for i in keyframes_up:
+            dy = self.y5[i]+self.vy[i]*dlta
+            dz = self.z5[i]+self.vz[i]*dlta
+            plt.plot([self.y5[i], dy], [self.z5[i], dz], c='g')
+            plt.annotate("", xy=(dy, dz), xytext=(self.y5[i], self.z5[i]), arrowprops=dict(arrowstyle="->"))
+        plt.show()
+        
+        
+    #绘制加速度带箭头
+    def drawAccelerate(self, dlta=0.005):
+        plt.plot(self.y5[::-1], self.z5[::-1], c='m', linewidth=1.0, linestyle='--')
+        for i in [39,132,250,413,555,680,821,967,1118,1272,1414,1569,1729,1876]:
+            dy = self.y5[i]+self.ay[i]*dlta
+            dz = self.z5[i]+self.az[i]*dlta
+            plt.plot([self.y5[i], dy], [self.z5[i], dz], c='g')
+            plt.annotate("", xy=(dy, dz), xytext=(self.y5[i],self.z5[i]), arrowprops=dict(arrowstyle="->"))
         plt.show()
 
-    def sensor_surface(self):
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
+    #绘制制定所有传感器纵向轨迹且叠加第5个传感器完整轮廓
     def sensors(self, ff, tf, step=50):
         seq = 0
         for i in range(ff - 1, tf - 1, step):
@@ -80,6 +95,7 @@ class SensorAnalysis(object):
         plt.plot(self.y5[ff:tf:step], self.z5[ff:tf:step], c='k')
         plt.show()
 
+    #绘制指定关键帧内所有传感器纵向轨迹
     def sensors2(self, zhiding):
         seq = 0
         for i in zhiding:
